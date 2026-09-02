@@ -1,51 +1,636 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2563eb"><meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Tray Tracker">
-<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tray Tracker">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Tray Tracker</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-header{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid #e5e9f0;padding:14px 16px calc(14px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center}
-.brand{font-size:22px;font-weight:800}.brand span{color:#2563eb}main{padding:16px;max-width:900px;margin:auto}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}.stat{background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:13px}.stat b{font-size:25px;display:block}.stat small{color:#687386}
-.panel{background:#fff;border:1px solid #e5e9f0;border-radius:16px;padding:14px;margin-bottom:14px}
-.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}select,input{border:1px solid #dce2ea;border-radius:10px;padding:11px;font:inherit;background:#fff}.grow{flex:1;min-width:160px}
-button{border:0;border-radius:10px;padding:11px 14px;font-weight:750;font-size:14px}.primary{background:#2563eb;color:#fff}.secondary{background:#eef2f7;color:#243047}
-.hospitals{display:flex;gap:8px;overflow:auto;padding-bottom:3px}.hospital{white-space:nowrap}.hospital.active{background:#2563eb;color:#fff}
-.tray{border:1px solid #e5e9f0;border-radius:14px;padding:13px;margin-top:10px}.traytop{display:flex;justify-content:space-between;gap:10px}.tray h3{margin:0 0 6px}.meta{font-size:13px;color:#687386;margin-top:6px}.status{display:inline-block;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800}.sterile{background:#dcfce7;color:#166534}.use{background:#dbeafe;color:#1d4ed8}.sterilize{background:#ffedd5;color:#c2410c}.pickup{background:#fef3c7;color:#a16207}.issue{background:#fee2e2;color:#b91c1c}
-.actions{display:flex;gap:7px;margin-top:10px}.actions select{flex:1}.empty{text-align:center;color:#687386;padding:30px 5px}
-.modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;z-index:10}.modal.open{display:flex}.box{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:20px calc(20px + env(safe-area-inset-left)) calc(22px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}.field{margin:12px 0}.field label{font-size:13px;font-weight:750;display:block;margin-bottom:6px}.field input,.field select{width:100%}.modalbuttons{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
-@media(min-width:700px){.stats{grid-template-columns:repeat(5,1fr)}.modal{align-items:center;justify-content:center}.box{width:420px;border-radius:18px}}
-</style></head>
-<body>
-<header><div class="brand">Tray <span>Tracker</span></div><button class="primary" id="add">+ Add Tray</button></header>
-<main>
-<div class="stats" id="stats"></div>
-<div class="panel"><div class="row"><strong>Hospital</strong><button class="secondary" id="addHospital">+ Add</button></div><div class="hospitals" id="hospitals"></div></div>
-<div class="panel"><div class="row"><input class="grow" id="search" placeholder="Search trays"><select id="filter"><option value="all">All statuses</option><option value="sterile">Sterile / Ready</option><option value="use">In Use</option><option value="sterilize">Needs Sterilization</option><option value="pickup">Needs Pickup</option><option value="issue">Missing / Issue</option></select></div><div id="list"></div></div>
-</main>
-<div class="modal" id="modal"><div class="box"><h2 id="title"></h2><div id="body"></div><div class="modalbuttons"><button class="secondary" id="cancel">Cancel</button><button class="primary" id="save">Save</button></div></div></div>
-<script>
-const K="trayTrackerPWA";const labels={sterile:"Sterile / Ready",use:"In Use",sterilize:"Needs Sterilization",pickup:"Needs Pickup",issue:"Missing / Issue"};
-let d=JSON.parse(localStorage.getItem(K)||"null")||{hospitals:["Hospital 1"],trays:[]},selected=d.hospitals[0],mode="";
-const $=id=>document.getElementById(id), esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-function save(){localStorage.setItem(K,JSON.stringify(d))}
-function render(){
- $("hospitals").innerHTML=d.hospitals.map(h=>`<button class="secondary hospital ${h===selected?"active":""}" onclick="selectH(${JSON.stringify(h)})">${esc(h)} (${d.trays.filter(t=>t.hospital===h).length})</button>`).join("");
- const counts=Object.fromEntries(Object.keys(labels).map(k=>[k,d.trays.filter(t=>t.status===k).length]));
- $("stats").innerHTML=`<div class="stat"><b>${d.trays.length}</b><small>Total Trays</small></div>`+Object.entries(labels).slice(0,4).map(([k,v])=>`<div class="stat"><b>${counts[k]}</b><small>${v}</small></div>`).join("");
- const q=$("search").value.toLowerCase(),f=$("filter").value;
- const a=d.trays.filter(t=>t.hospital===selected&&(f==="all"||t.status===f)&&(t.id+" "+t.note).toLowerCase().includes(q));
- $("list").innerHTML=a.length?a.map(t=>`<div class="tray"><div class="traytop"><div><h3>${esc(t.id)}</h3><span class="status ${t.status}">${labels[t.status]}</span></div></div>${t.note?`<div class="meta">${esc(t.note)}</div>`:""}<div class="actions"><select onchange="status(${JSON.stringify(t.id)},this.value)">${Object.entries(labels).map(([k,v])=>`<option value="${k}" ${k===t.status?"selected":""}>${v}</option>`).join("")}</select><button class="secondary" onclick="del(${JSON.stringify(t.id)})">Delete</button></div></div>`).join(""):`<div class="empty">No trays in this view.</div>`;
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:#f5f7fb;
+  color:#172033;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
 }
-function selectH(h){selected=h;render()}function status(id,s){let t=d.trays.find(x=>x.id===id);t.status=s;t.updated=Date.now();save();render()}
-function del(id){if(confirm("Delete "+id+"?")){d.trays=d.trays.filter(t=>t.id!==id);save();render()}}
-function open(m){mode=m;$("modal").classList.add("open");$("title").textContent=m==="tray"?"Add Surgical Tray":"Add Hospital";$("body").innerHTML=m==="tray"?`<div class="field"><label>Tray ID / Name</label><input id="m1" placeholder="e.g. TKA-05"></div><div class="field"><label>Hospital</label><select id="m2">${d.hospitals.map(h=>`<option>${esc(h)}</option>`).join("")}</select></div><div class="field"><label>Starting Status</label><select id="m3">${Object.entries(labels).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></div><div class="field"><label>Note</label><input id="m4" placeholder="OR, case, issue, etc."></div>`:`<div class="field"><label>Hospital Name</label><input id="m1" placeholder="Hospital name"></div>`}
-function close(){$("modal").classList.remove("open")}
-$("add").onclick=()=>open("tray");$("addHospital").onclick=()=>open("hospital");$("cancel").onclick=close;
-$("save").onclick=()=>{let n=$("m1").value.trim();if(!n)return alert("Enter a name.");if(mode==="hospital"){if(d.hospitals.includes(n))return alert("Hospital already exists.");d.hospitals.push(n);selected=n}else{if(d.trays.some(t=>t.id.toLowerCase()===n.toLowerCase()))return alert("Tray ID already exists.");d.trays.push({id:n,hospital:$("m2").value,status:$("m3").value,note:$("m4").value.trim()})}save();close();render()};
-$("search").oninput=render;$("filter").onchange=render;render();
-if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
-</script></body></html>
+
+header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#fff;
+  border-bottom:1px solid #e5e9f0;
+  padding:14px 16px calc(14px + env(safe-area-inset-top));
+  display:flex;
+  justify-content:space-between;
+  align-items:center
+}
+
+.brand{
+  font-size:22px;
+  font-weight:800
+}
+
+.brand span{
+  color:#2563eb
+}
+
+main{
+  padding:16px;
+  max-width:900px;
+  margin:auto
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-bottom:16px
+}
+
+.stat{
+  background:#fff;
+  border:1px solid #e5e9f0;
+  border-radius:14px;
+  padding:13px
+}
+
+.stat b{
+  font-size:25px;
+  display:block
+}
+
+.stat small{
+  color:#687386
+}
+
+.panel{
+  background:#fff;
+  border:1px solid #e5e9f0;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px
+}
+
+.row{
+  display:flex;
+  gap:9px;
+  align-items:center;
+  flex-wrap:wrap
+}
+
+select,input{
+  border:1px solid #dce2ea;
+  border-radius:10px;
+  padding:11px;
+  font:inherit;
+  background:#fff
+}
+
+.grow{
+  flex:1;
+  min-width:160px
+}
+
+button{
+  border:0;
+  border-radius:10px;
+  padding:11px 14px;
+  font-weight:750;
+  font-size:14px;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent
+}
+
+.primary{
+  background:#2563eb;
+  color:#fff
+}
+
+.secondary{
+  background:#eef2f7;
+  color:#243047
+}
+
+#hospitalSelect{
+  width:100%;
+  font-size:16px;
+  min-height:46px
+}
+
+.tray{
+  border:1px solid #e5e9f0;
+  border-radius:14px;
+  padding:13px;
+  margin-top:10px
+}
+
+.traytop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px
+}
+
+.tray h3{
+  margin:0 0 6px
+}
+
+.meta{
+  font-size:13px;
+  color:#687386;
+  margin-top:6px
+}
+
+.status{
+  display:inline-block;
+  padding:6px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800
+}
+
+.sterile{
+  background:#dcfce7;
+  color:#166534
+}
+
+.use{
+  background:#dbeafe;
+  color:#1d4ed8
+}
+
+.sterilize{
+  background:#ffedd5;
+  color:#c2410c
+}
+
+.pickup{
+  background:#fef3c7;
+  color:#a16207
+}
+
+.issue{
+  background:#fee2e2;
+  color:#b91c1c
+}
+
+.actions{
+  display:flex;
+  gap:7px;
+  margin-top:10px
+}
+
+.actions select{
+  flex:1
+}
+
+.empty{
+  text-align:center;
+  color:#687386;
+  padding:30px 5px
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:#0008;
+  display:none;
+  align-items:flex-end;
+  z-index:10
+}
+
+.modal.open{
+  display:flex
+}
+
+.box{
+  background:#fff;
+  width:100%;
+  border-radius:20px 20px 0 0;
+  padding:20px calc(20px + env(safe-area-inset-left)) calc(22px + env(safe-area-inset-bottom));
+  max-height:90vh;
+  overflow:auto
+}
+
+.field{
+  margin:12px 0
+}
+
+.field label{
+  font-size:13px;
+  font-weight:750;
+  display:block;
+  margin-bottom:6px
+}
+
+.field input,
+.field select{
+  width:100%
+}
+
+.modalbuttons{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top:18px
+}
+
+@media(min-width:700px){
+  .stats{
+    grid-template-columns:repeat(5,1fr)
+  }
+
+  .modal{
+    align-items:center;
+    justify-content:center
+  }
+
+  .box{
+    width:420px;
+    border-radius:18px
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">Tray <span>Tracker</span></div>
+  <button class="primary" id="add">+ Add Tray</button>
+</header>
+
+<main>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="panel">
+    <div class="row">
+      <strong>Hospital</strong>
+      <button class="secondary" id="addHospital">+ Add</button>
+    </div>
+
+    <div style="margin-top:10px">
+      <select id="hospitalSelect"></select>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <input class="grow" id="search" placeholder="Search trays">
+     
+      <select id="filter">
+        <option value="all">All statuses</option>
+        <option value="sterile">Sterile / Ready</option>
+        <option value="use">In Use</option>
+        <option value="sterilize">Needs Sterilization</option>
+        <option value="pickup">Needs Pickup</option>
+        <option value="issue">Missing / Issue</option>
+      </select>
+    </div>
+
+    <div id="list"></div>
+  </div>
+
+</main>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <h2 id="title"></h2>
+    <div id="body"></div>
+
+    <div class="modalbuttons">
+      <button class="secondary" id="cancel">Cancel</button>
+      <button class="primary" id="save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const K="trayTrackerPWA";
+
+const labels={
+  sterile:"Sterile / Ready",
+  use:"In Use",
+  sterilize:"Needs Sterilization",
+  pickup:"Needs Pickup",
+  issue:"Missing / Issue"
+};
+
+let d=JSON.parse(localStorage.getItem(K)||"null")||{
+  hospitals:["Hospital 1"],
+  trays:[]
+};
+
+let selected=d.hospitals[0];
+let mode="";
+
+const $=id=>document.getElementById(id);
+
+const esc=s=>String(s).replace(
+  /[&<>"']/g,
+  m=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  }[m])
+);
+
+function save(){
+  localStorage.setItem(K,JSON.stringify(d));
+}
+
+function render(){
+
+  /* Hospital dropdown */
+  $("hospitalSelect").innerHTML=d.hospitals.map(h=>
+    `<option value="${esc(h)}" ${h===selected?"selected":""}>
+      ${esc(h)} (${d.trays.filter(t=>t.hospital===h).length})
+    </option>`
+  ).join("");
+
+  /* Statistics for selected hospital */
+  const hospitalTrays=d.trays.filter(t=>t.hospital===selected);
+
+  const counts=Object.fromEntries(
+    Object.keys(labels).map(k=>[
+      k,
+      hospitalTrays.filter(t=>t.status===k).length
+    ])
+  );
+
+  $("stats").innerHTML=
+    `<div class="stat">
+      <b>${hospitalTrays.length}</b>
+      <small>Total Trays</small>
+    </div>`+
+    Object.entries(labels).slice(0,4).map(([k,v])=>
+      `<div class="stat">
+        <b>${counts[k]}</b>
+        <small>${v}</small>
+      </div>`
+    ).join("");
+
+  /* Search and filter */
+  const q=$("search").value.toLowerCase();
+  const f=$("filter").value;
+
+  const a=hospitalTrays.filter(t=>
+    (f==="all"||t.status===f) &&
+    (t.id+" "+(t.note||"")).toLowerCase().includes(q)
+  );
+
+  /* Tray list */
+  $("list").innerHTML=a.length
+    ? a.map(t=>`
+      <div class="tray">
+
+        <div class="traytop">
+          <div>
+            <h3>${esc(t.id)}</h3>
+
+            <span class="status ${t.status}">
+              ${labels[t.status]}
+            </span>
+          </div>
+        </div>
+
+        ${
+          t.note
+          ? `<div class="meta">${esc(t.note)}</div>`
+          : ""
+        }
+
+        <div class="actions">
+
+          <select onchange="status(${JSON.stringify(t.id)},this.value)">
+            ${
+              Object.entries(labels).map(([k,v])=>
+                `<option value="${k}" ${k===t.status?"selected":""}>
+                  ${v}
+                </option>`
+              ).join("")
+            }
+          </select>
+
+          <button
+            class="secondary"
+            onclick="del(${JSON.stringify(t.id)})">
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+    `).join("")
+
+    : `<div class="empty">No trays in this view.</div>`;
+}
+
+
+/* Change hospital */
+function changeHospital(h){
+  if(d.hospitals.includes(h)){
+    selected=h;
+    $("search").value="";
+    $("filter").value="all";
+    render();
+  }
+}
+
+
+/* Change tray status */
+function status(id,s){
+
+  let t=d.trays.find(x=>x.id===id);
+
+  if(!t)return;
+
+  t.status=s;
+  t.updated=Date.now();
+
+  save();
+  render();
+}
+
+
+/* Delete tray */
+function del(id){
+
+  if(confirm("Delete "+id+"?")){
+
+    d.trays=d.trays.filter(t=>t.id!==id);
+
+    save();
+    render();
+  }
+}
+
+
+/* Open modal */
+function open(m){
+
+  mode=m;
+
+  $("modal").classList.add("open");
+
+  $("title").textContent=
+    m==="tray"
+    ? "Add Surgical Tray"
+    : "Add Hospital";
+
+  if(m==="tray"){
+
+    $("body").innerHTML=`
+
+      <div class="field">
+        <label>Tray ID / Name</label>
+        <input id="m1" placeholder="e.g. TKA-05">
+      </div>
+
+      <div class="field">
+        <label>Hospital</label>
+
+        <select id="m2">
+          ${d.hospitals.map(h=>
+            `<option value="${esc(h)}" ${h===selected?"selected":""}>
+              ${esc(h)}
+            </option>`
+          ).join("")}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Starting Status</label>
+
+        <select id="m3">
+          ${
+            Object.entries(labels).map(([k,v])=>
+              `<option value="${k}">
+                ${v}
+              </option>`
+            ).join("")
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Note</label>
+        <input id="m4" placeholder="OR, case, issue, etc.">
+      </div>
+
+    `;
+
+  }else{
+
+    $("body").innerHTML=`
+
+      <div class="field">
+        <label>Hospital Name</label>
+        <input id="m1" placeholder="Hospital name">
+      </div>
+
+    `;
+  }
+}
+
+
+/* Close modal */
+function close(){
+  $("modal").classList.remove("open");
+}
+
+
+/* Buttons */
+$("add").onclick=()=>open("tray");
+
+$("addHospital").onclick=()=>open("hospital");
+
+$("cancel").onclick=close;
+
+
+/* Hospital selector */
+$("hospitalSelect").onchange=()=>{
+  changeHospital($("hospitalSelect").value);
+};
+
+
+/* Save */
+$("save").onclick=()=>{
+
+  let n=$("m1").value.trim();
+
+  if(!n){
+    return alert("Enter a name.");
+  }
+
+  if(mode==="hospital"){
+
+    if(d.hospitals.includes(n)){
+      return alert("Hospital already exists.");
+    }
+
+    d.hospitals.push(n);
+
+    selected=n;
+
+  }else{
+
+    if(
+      d.trays.some(
+        t=>t.id.toLowerCase()===n.toLowerCase()
+      )
+    ){
+      return alert("Tray ID already exists.");
+    }
+
+    d.trays.push({
+      id:n,
+      hospital:$("m2").value,
+      status:$("m3").value,
+      note:$("m4").value.trim(),
+      updated:Date.now()
+    });
+  }
+
+  save();
+  close();
+  render();
+};
+
+
+/* Search and filter */
+$("search").oninput=render;
+
+$("filter").onchange=render;
+
+
+/* Initial render */
+render();
+
+
+/* Service worker */
+if("serviceWorker"in navigator){
+
+  window.addEventListener("load",()=>{
+
+    navigator.serviceWorker.register("sw.js");
+
+  });
+
+}
+
+</script>
+
+</body>
+</html>
