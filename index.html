@@ -1,635 +1,2058 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#2563eb">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Tray Tracker">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png">
-<title>Tray Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tray Tracker">
 
-<style>
-*{box-sizing:border-box}
+  <title>Tray Tracker</title>
 
-body{
-  margin:0;
-  background:#f5f7fb;
-  color:#172033;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
-}
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-header{
-  position:sticky;
-  top:0;
-  z-index:5;
-  background:#fff;
-  border-bottom:1px solid #e5e9f0;
-  padding:14px 16px calc(14px + env(safe-area-inset-top));
-  display:flex;
-  justify-content:space-between;
-  align-items:center
-}
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding-bottom: 90px;
+    }
 
-.brand{
-  font-size:22px;
-  font-weight:800
-}
+    button,
+    input,
+    select {
+      font: inherit;
+    }
 
-.brand span{
-  color:#2563eb
-}
+    button {
+      cursor: pointer;
+    }
 
-main{
-  padding:16px;
-  max-width:900px;
-  margin:auto
-}
+    .header {
+      background: #0f172a;
+      color: white;
+      padding: 18px 16px;
+      padding-top: calc(18px + env(safe-area-inset-top));
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-.stats{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  margin-bottom:16px
-}
+    .header-title {
+      font-size: 24px;
+      font-weight: 800;
+    }
 
-.stat{
-  background:#fff;
-  border:1px solid #e5e9f0;
-  border-radius:14px;
-  padding:13px
-}
+    .header-subtitle {
+      margin-top: 3px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
 
-.stat b{
-  font-size:25px;
-  display:block
-}
+    .container {
+      max-width: 850px;
+      margin: auto;
+      padding: 16px;
+    }
 
-.stat small{
-  color:#687386
-}
+    .page {
+      display: none;
+    }
 
-.panel{
-  background:#fff;
-  border:1px solid #e5e9f0;
-  border-radius:16px;
-  padding:14px;
-  margin-bottom:14px
-}
+    .page.active {
+      display: block;
+    }
 
-.row{
-  display:flex;
-  gap:9px;
-  align-items:center;
-  flex-wrap:wrap
-}
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+    }
 
-select,input{
-  border:1px solid #dce2ea;
-  border-radius:10px;
-  padding:11px;
-  font:inherit;
-  background:#fff
-}
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
 
-.grow{
-  flex:1;
-  min-width:160px
-}
+    .hospital-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
 
-button{
-  border:0;
-  border-radius:10px;
-  padding:11px 14px;
-  font-weight:750;
-  font-size:14px;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent
-}
+    .hospital-button {
+      border: 2px solid #cbd5e1;
+      background: white;
+      border-radius: 14px;
+      padding: 15px 10px;
+      text-align: left;
+      min-height: 76px;
+      color: #0f172a;
+      transition: .15s;
+    }
 
-.primary{
-  background:#2563eb;
-  color:#fff
-}
+    .hospital-button:active {
+      transform: scale(.98);
+    }
 
-.secondary{
-  background:#eef2f7;
-  color:#243047
-}
+    .hospital-button.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
 
-#hospitalSelect{
-  width:100%;
-  font-size:16px;
-  min-height:46px
-}
+    .hospital-name {
+      font-weight: 800;
+      font-size: 15px;
+    }
 
-.tray{
-  border:1px solid #e5e9f0;
-  border-radius:14px;
-  padding:13px;
-  margin-top:10px
-}
+    .hospital-count {
+      margin-top: 5px;
+      color: #64748b;
+      font-size: 13px;
+    }
 
-.traytop{
-  display:flex;
-  justify-content:space-between;
-  gap:10px
-}
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
 
-.tray h3{
-  margin:0 0 6px
-}
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 15px;
+      font-weight: 700;
+      min-height: 44px;
+    }
 
-.meta{
-  font-size:13px;
-  color:#687386;
-  margin-top:6px
-}
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
 
-.status{
-  display:inline-block;
-  padding:6px 9px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:800
-}
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
 
-.sterile{
-  background:#dcfce7;
-  color:#166534
-}
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
 
-.use{
-  background:#dbeafe;
-  color:#1d4ed8
-}
+    .btn-success {
+      background: #16a34a;
+      color: white;
+    }
 
-.sterilize{
-  background:#ffedd5;
-  color:#c2410c
-}
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
 
-.pickup{
-  background:#fef3c7;
-  color:#a16207
-}
+    .input,
+    .select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      background: white;
+      border-radius: 11px;
+      padding: 12px;
+      min-height: 46px;
+      outline: none;
+    }
 
-.issue{
-  background:#fee2e2;
-  color:#b91c1c
-}
+    .input:focus,
+    .select:focus {
+      border-color: #2563eb;
+    }
 
-.actions{
-  display:flex;
-  gap:7px;
-  margin-top:10px
-}
+    .form-row {
+      display: grid;
+      gap: 10px;
+    }
 
-.actions select{
-  flex:1
-}
+    .tray-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
 
-.empty{
-  text-align:center;
-  color:#687386;
-  padding:30px 5px
-}
+    .tray {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 13px;
+    }
 
-.modal{
-  position:fixed;
-  inset:0;
-  background:#0008;
-  display:none;
-  align-items:flex-end;
-  z-index:10
-}
+    .tray-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
 
-.modal.open{
-  display:flex
-}
+    .tray-checkbox {
+      width: 24px;
+      height: 24px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+      accent-color: #2563eb;
+    }
 
-.box{
-  background:#fff;
-  width:100%;
-  border-radius:20px 20px 0 0;
-  padding:20px calc(20px + env(safe-area-inset-left)) calc(22px + env(safe-area-inset-bottom));
-  max-height:90vh;
-  overflow:auto
-}
+    .tray-info {
+      flex: 1;
+      min-width: 0;
+    }
 
-.field{
-  margin:12px 0
-}
+    .tray-name {
+      font-weight: 800;
+      font-size: 16px;
+    }
 
-.field label{
-  font-size:13px;
-  font-weight:750;
-  display:block;
-  margin-bottom:6px
-}
+    .tray-notes {
+      color: #64748b;
+      font-size: 13px;
+      margin-top: 3px;
+    }
 
-.field input,
-.field select{
-  width:100%
-}
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
 
-.modalbuttons{
-  display:flex;
-  gap:8px;
-  justify-content:flex-end;
-  margin-top:18px
-}
+    .status-sterile {
+      background: #dcfce7;
+      color: #166534;
+    }
 
-@media(min-width:700px){
-  .stats{
-    grid-template-columns:repeat(5,1fr)
-  }
+    .status-inuse {
+      background: #fef3c7;
+      color: #92400e;
+    }
 
-  .modal{
-    align-items:center;
-    justify-content:center
-  }
+    .status-needs {
+      background: #fee2e2;
+      color: #991b1b;
+    }
 
-  .box{
-    width:420px;
-    border-radius:18px
-  }
-}
-</style>
+    .status-other {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .tray-actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .small-btn {
+      border: 0;
+      border-radius: 9px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #e2e8f0;
+    }
+
+    .empty {
+      text-align: center;
+      color: #64748b;
+      padding: 30px 10px;
+    }
+
+    .current-hospital {
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-weight: 800;
+    }
+
+    .transfer-summary {
+      background: #eff6ff;
+      color: #1e40af;
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0;
+      font-weight: 700;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 12px calc(9px + env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+
+    .nav-btn {
+      flex: 1;
+      max-width: 300px;
+      border: 0;
+      background: transparent;
+      border-radius: 12px;
+      padding: 9px;
+      font-weight: 800;
+      color: #64748b;
+    }
+
+    .nav-btn.active {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 200;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 15px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+    }
+
+    .danger-text {
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    @media (min-width: 650px) {
+      .form-row.two {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<header>
-  <div class="brand">Tray <span>Tracker</span></div>
-  <button class="primary" id="add">+ Add Tray</button>
-</header>
+  <header class="header">
+    <div class="header-title">Tray Tracker</div>
+    <div class="header-subtitle">Hospital Tray Management</div>
+  </header>
 
-<main>
+  <main class="container">
 
-  <div class="stats" id="stats"></div>
+    <!-- HOSPITAL PAGE -->
+    <section id="hospitalPage" class="page active">
 
-  <div class="panel">
-    <div class="row">
-      <strong>Hospital</strong>
-      <button class="secondary" id="addHospital">+ Add</button>
-    </div>
+      <div class="card">
+        <div class="section-title">Hospitals</div>
 
-    <div style="margin-top:10px">
-      <select id="hospitalSelect"></select>
-    </div>
-  </div>
+        <div id="hospitalGrid" class="hospital-grid"></div>
 
-  <div class="panel">
-    <div class="row">
-      <input class="grow" id="search" placeholder="Search trays">
-     
-      <select id="filter">
-        <option value="all">All statuses</option>
-        <option value="sterile">Sterile / Ready</option>
-        <option value="use">In Use</option>
-        <option value="sterilize">Needs Sterilization</option>
-        <option value="pickup">Needs Pickup</option>
-        <option value="issue">Missing / Issue</option>
-      </select>
-    </div>
-
-    <div id="list"></div>
-  </div>
-
-</main>
-
-<div class="modal" id="modal">
-  <div class="box">
-    <h2 id="title"></h2>
-    <div id="body"></div>
-
-    <div class="modalbuttons">
-      <button class="secondary" id="cancel">Cancel</button>
-      <button class="primary" id="save">Save</button>
-    </div>
-  </div>
-</div>
-
-<script>
-
-const K="trayTrackerPWA";
-
-const labels={
-  sterile:"Sterile / Ready",
-  use:"In Use",
-  sterilize:"Needs Sterilization",
-  pickup:"Needs Pickup",
-  issue:"Missing / Issue"
-};
-
-let d=JSON.parse(localStorage.getItem(K)||"null")||{
-  hospitals:["Hospital 1"],
-  trays:[]
-};
-
-let selected=d.hospitals[0];
-let mode="";
-
-const $=id=>document.getElementById(id);
-
-const esc=s=>String(s).replace(
-  /[&<>"']/g,
-  m=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#039;"
-  }[m])
-);
-
-function save(){
-  localStorage.setItem(K,JSON.stringify(d));
-}
-
-function render(){
-
-  /* Hospital dropdown */
-  $("hospitalSelect").innerHTML=d.hospitals.map(h=>
-    `<option value="${esc(h)}" ${h===selected?"selected":""}>
-      ${esc(h)} (${d.trays.filter(t=>t.hospital===h).length})
-    </option>`
-  ).join("");
-
-  /* Statistics for selected hospital */
-  const hospitalTrays=d.trays.filter(t=>t.hospital===selected);
-
-  const counts=Object.fromEntries(
-    Object.keys(labels).map(k=>[
-      k,
-      hospitalTrays.filter(t=>t.status===k).length
-    ])
-  );
-
-  $("stats").innerHTML=
-    `<div class="stat">
-      <b>${hospitalTrays.length}</b>
-      <small>Total Trays</small>
-    </div>`+
-    Object.entries(labels).slice(0,4).map(([k,v])=>
-      `<div class="stat">
-        <b>${counts[k]}</b>
-        <small>${v}</small>
-      </div>`
-    ).join("");
-
-  /* Search and filter */
-  const q=$("search").value.toLowerCase();
-  const f=$("filter").value;
-
-  const a=hospitalTrays.filter(t=>
-    (f==="all"||t.status===f) &&
-    (t.id+" "+(t.note||"")).toLowerCase().includes(q)
-  );
-
-  /* Tray list */
-  $("list").innerHTML=a.length
-    ? a.map(t=>`
-      <div class="tray">
-
-        <div class="traytop">
-          <div>
-            <h3>${esc(t.id)}</h3>
-
-            <span class="status ${t.status}">
-              ${labels[t.status]}
-            </span>
-          </div>
+        <div style="margin-top:12px;">
+          <button type="button" class="btn btn-primary" id="addHospitalBtn">
+            + Add Hospital
+          </button>
         </div>
+      </div>
 
-        ${
-          t.note
-          ? `<div class="meta">${esc(t.note)}</div>`
-          : ""
-        }
+      <div id="currentHospitalBox" class="current-hospital"></div>
 
-        <div class="actions">
-
-          <select onchange="status(${JSON.stringify(t.id)},this.value)">
-            ${
-              Object.entries(labels).map(([k,v])=>
-                `<option value="${k}" ${k===t.status?"selected":""}>
-                  ${v}
-                </option>`
-              ).join("")
-            }
-          </select>
-
-          <button
-            class="secondary"
-            onclick="del(${JSON.stringify(t.id)})">
-            Delete
+      <div class="card">
+        <div class="toolbar">
+          <button type="button" class="btn btn-primary" id="addTrayBtn">
+            + Add Tray
           </button>
 
+          <button type="button" class="btn btn-danger" id="deleteHospitalBtn">
+            Delete Hospital
+          </button>
+        </div>
+
+        <div class="form-row two">
+          <input
+            id="traySearch"
+            class="input"
+            type="search"
+            placeholder="Search trays..."
+            autocomplete="off"
+          >
+
+          <select id="statusFilter" class="select">
+            <option value="all">All statuses</option>
+            <option value="sterile">Sterile</option>
+            <option value="in-use">In Use</option>
+            <option value="needs-sterile">Needs Sterile</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Trays</div>
+        <div id="trayList" class="tray-list"></div>
+      </div>
+
+    </section>
+
+
+    <!-- TRANSFER PAGE -->
+    <section id="transferPage" class="page">
+
+      <div class="card">
+        <div class="section-title">Transfer Trays</div>
+
+        <div class="form-row two">
+
+          <div>
+            <label><strong>From Hospital</strong></label>
+            <select id="transferFrom" class="select"></select>
+          </div>
+
+          <div>
+            <label><strong>To Hospital</strong></label>
+            <select id="transferTo" class="select"></select>
+          </div>
+
+        </div>
+
+        <div id="transferSummary" class="transfer-summary">
+          0 trays selected
+        </div>
+
+        <div class="toolbar">
+          <button type="button" class="btn btn-secondary" id="selectAllBtn">
+            Select All
+          </button>
+
+          <button type="button" class="btn btn-secondary" id="clearSelectionBtn">
+            Clear
+          </button>
+
+          <button type="button" class="btn btn-success" id="transferBtn">
+            Transfer Selected
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <input
+          id="transferSearch"
+          class="input"
+          type="search"
+          placeholder="Search trays to transfer..."
+          autocomplete="off"
+        >
+      </div>
+
+      <div class="card">
+        <div class="section-title">Available Trays</div>
+        <div id="transferTrayList" class="tray-list"></div>
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+
+    <button type="button" class="nav-btn active" id="homeNav">
+      🏥 Hospitals
+    </button>
+
+    <button type="button" class="nav-btn" id="transferNav">
+      🔄 Transfer
+    </button>
+
+  </nav>
+
+
+  <!-- MODAL -->
+  <div id="modalBackdrop" class="modal-backdrop">
+
+    <div class="modal">
+
+      <div id="modalTitle" class="modal-title"></div>
+
+      <div id="modalBody"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="modalCancel">
+          Cancel
+        </button>
+
+        <button type="button" class="btn btn-primary" id="modalConfirm">
+          Save
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+
+<script>
+(function () {
+
+  "use strict";
+
+  const STORAGE_KEY = "trayTracker_v2";
+
+  let state = {
+    hospitals: [],
+    trays: [],
+    activeHospitalId: null
+  };
+
+  let selectedTransferTrays = new Set();
+
+
+  /* -----------------------------
+     HELPERS
+  ----------------------------- */
+
+  function makeId(prefix) {
+    return prefix + "_" + Date.now() + "_" +
+      Math.random().toString(36).substring(2, 8);
+  }
+
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+
+  function load() {
+
+    try {
+
+      const saved = localStorage.getItem(STORAGE_KEY);
+
+      if (saved) {
+        state = JSON.parse(saved);
+      }
+
+    } catch (error) {
+
+      console.error("Could not load Tray Tracker data.", error);
+
+    }
+
+    if (!Array.isArray(state.hospitals)) {
+      state.hospitals = [];
+    }
+
+    if (!Array.isArray(state.trays)) {
+      state.trays = [];
+    }
+
+    if (!state.activeHospitalId && state.hospitals.length) {
+      state.activeHospitalId = state.hospitals[0].id;
+    }
+
+    /*
+      If the old app used a different storage key,
+      try to import its data automatically.
+    */
+    if (!state.hospitals.length) {
+
+      try {
+
+        const old = localStorage.getItem("trayTracker_v1");
+
+        if (old) {
+
+          const oldState = JSON.parse(old);
+
+          if (Array.isArray(oldState.hospitals)) {
+            state = oldState;
+          }
+
+          if (!state.activeHospitalId && state.hospitals.length) {
+            state.activeHospitalId = state.hospitals[0].id;
+          }
+
+          save();
+        }
+
+      } catch (error) {
+        console.log("No old data imported.");
+      }
+    }
+  }
+
+
+  function getActiveHospital() {
+    return state.hospitals.find(
+      h => h.id === state.activeHospitalId
+    ) || null;
+  }
+
+
+  function hospitalName(id) {
+
+    const hospital = state.hospitals.find(h => h.id === id);
+
+    return hospital ? hospital.name : "Unknown Hospital";
+  }
+
+
+  function statusLabel(status) {
+
+    switch (status) {
+
+      case "sterile":
+        return "Sterile";
+
+      case "in-use":
+        return "In Use";
+
+      case "needs-sterile":
+        return "Needs Sterile";
+
+      default:
+        return "Other";
+    }
+  }
+
+
+  function statusClass(status) {
+
+    switch (status) {
+
+      case "sterile":
+        return "status-sterile";
+
+      case "in-use":
+        return "status-inuse";
+
+      case "needs-sterile":
+        return "status-needs";
+
+      default:
+        return "status-other";
+    }
+  }
+
+
+  /* -----------------------------
+     MODAL
+  ----------------------------- */
+
+  let modalConfirmAction = null;
+
+  function showModal(title, body, confirmText, action) {
+
+    document.getElementById("modalTitle").textContent = title;
+
+    document.getElementById("modalBody").innerHTML = body;
+
+    document.getElementById("modalConfirm").textContent =
+      confirmText || "Save";
+
+    modalConfirmAction = action;
+
+    document
+      .getElementById("modalBackdrop")
+      .classList.add("show");
+  }
+
+
+  function closeModal() {
+
+    document
+      .getElementById("modalBackdrop")
+      .classList.remove("show");
+
+    modalConfirmAction = null;
+  }
+
+
+  /* -----------------------------
+     HOSPITALS
+  ----------------------------- */
+
+  function renderHospitals() {
+
+    const grid = document.getElementById("hospitalGrid");
+
+    if (!state.hospitals.length) {
+
+      grid.innerHTML = `
+        <div class="empty">
+          No hospitals added yet.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    grid.innerHTML = state.hospitals.map(hospital => {
+
+      const count = state.trays.filter(
+        tray => tray.hospitalId === hospital.id
+      ).length;
+
+      const active =
+        hospital.id === state.activeHospitalId
+          ? "active"
+          : "";
+
+      return `
+        <button
+          type="button"
+          class="hospital-button ${active}"
+          data-hospital-id="${escapeHtml(hospital.id)}"
+        >
+
+          <div class="hospital-name">
+            ${escapeHtml(hospital.name)}
+          </div>
+
+          <div class="hospital-count">
+            ${count} tray${count === 1 ? "" : "s"}
+          </div>
+
+        </button>
+      `;
+
+    }).join("");
+  }
+
+
+  function selectHospital(id) {
+
+    const exists = state.hospitals.some(
+      hospital => hospital.id === id
+    );
+
+    if (!exists) return;
+
+    state.activeHospitalId = id;
+
+    save();
+
+    renderAll();
+  }
+
+
+  function addHospital() {
+
+    showModal(
+      "Add Hospital",
+
+      `
+        <input
+          id="modalHospitalName"
+          class="input"
+          placeholder="Hospital name"
+          autocomplete="off"
+        >
+      `,
+
+      "Add",
+
+      function () {
+
+        const input =
+          document.getElementById("modalHospitalName");
+
+        const name = input.value.trim();
+
+        if (!name) {
+          alert("Please enter a hospital name.");
+          return false;
+        }
+
+        const hospital = {
+          id: makeId("hospital"),
+          name: name
+        };
+
+        state.hospitals.push(hospital);
+
+        state.activeHospitalId = hospital.id;
+
+        save();
+
+        renderAll();
+
+        return true;
+      }
+    );
+
+    setTimeout(function () {
+
+      const input =
+        document.getElementById("modalHospitalName");
+
+      if (input) input.focus();
+
+    }, 50);
+  }
+
+
+  function deleteHospital() {
+
+    const hospital = getActiveHospital();
+
+    if (!hospital) {
+      alert("Select a hospital first.");
+      return;
+    }
+
+    const trays = state.trays.filter(
+      tray => tray.hospitalId === hospital.id
+    );
+
+    if (trays.length > 0) {
+
+      alert(
+        "You cannot delete this hospital while trays are assigned to it.\n\n" +
+        "Transfer or delete its " +
+        trays.length +
+        " tray" +
+        (trays.length === 1 ? "" : "s") +
+        " first."
+      );
+
+      return;
+    }
+
+
+    showModal(
+
+      "Delete Hospital",
+
+      `
+        <p>
+          Are you sure you want to delete
+          <strong>${escapeHtml(hospital.name)}</strong>?
+        </p>
+
+        <p class="danger-text">
+          This cannot be undone.
+        </p>
+      `,
+
+      "Delete",
+
+      function () {
+
+        state.hospitals =
+          state.hospitals.filter(
+            h => h.id !== hospital.id
+          );
+
+        state.activeHospitalId =
+          state.hospitals.length
+            ? state.hospitals[0].id
+            : null;
+
+        save();
+
+        renderAll();
+
+        return true;
+      }
+    );
+  }
+
+
+  /* -----------------------------
+     TRAYS
+  ----------------------------- */
+
+  function addTray() {
+
+    const hospital = getActiveHospital();
+
+    if (!hospital) {
+      alert("Add or select a hospital first.");
+      return;
+    }
+
+
+    showModal(
+
+      "Add Tray",
+
+      `
+        <div class="form-row">
+
+          <input
+            id="modalTrayName"
+            class="input"
+            placeholder="Tray name or number"
+            autocomplete="off"
+          >
+
+          <select id="modalTrayStatus" class="select">
+
+            <option value="sterile">
+              Sterile
+            </option>
+
+            <option value="in-use">
+              In Use
+            </option>
+
+            <option value="needs-sterile">
+              Needs Sterile
+            </option>
+
+            <option value="other">
+              Other
+            </option>
+
+          </select>
+
+          <input
+            id="modalTrayNotes"
+            class="input"
+            placeholder="Notes (optional)"
+            autocomplete="off"
+          >
+
+        </div>
+      `,
+
+      "Add",
+
+      function () {
+
+        const name =
+          document
+            .getElementById("modalTrayName")
+            .value
+            .trim();
+
+        const status =
+          document
+            .getElementById("modalTrayStatus")
+            .value;
+
+        const notes =
+          document
+            .getElementById("modalTrayNotes")
+            .value
+            .trim();
+
+        if (!name) {
+          alert("Please enter a tray name or number.");
+          return false;
+        }
+
+
+        state.trays.push({
+
+          id: makeId("tray"),
+
+          name: name,
+
+          hospitalId: hospital.id,
+
+          status: status,
+
+          notes: notes
+
+        });
+
+
+        save();
+
+        renderAll();
+
+        return true;
+      }
+    );
+
+
+    setTimeout(function () {
+
+      const input =
+        document.getElementById("modalTrayName");
+
+      if (input) input.focus();
+
+    }, 50);
+  }
+
+
+  function changeTrayStatus(trayId, status) {
+
+    const tray = state.trays.find(
+      tray => tray.id === trayId
+    );
+
+    if (!tray) return;
+
+    tray.status = status;
+
+    save();
+
+    renderAll();
+  }
+
+
+  function deleteTray(trayId) {
+
+    const tray = state.trays.find(
+      tray => tray.id === trayId
+    );
+
+    if (!tray) return;
+
+
+    showModal(
+
+      "Delete Tray",
+
+      `
+        <p>
+          Delete
+          <strong>${escapeHtml(tray.name)}</strong>?
+        </p>
+
+        <p class="danger-text">
+          This cannot be undone.
+        </p>
+      `,
+
+      "Delete",
+
+      function () {
+
+        state.trays =
+          state.trays.filter(
+            t => t.id !== trayId
+          );
+
+        selectedTransferTrays.delete(trayId);
+
+        save();
+
+        renderAll();
+
+        return true;
+      }
+    );
+  }
+
+
+  function renderTrays() {
+
+    const container =
+      document.getElementById("trayList");
+
+    const hospital =
+      getActiveHospital();
+
+    if (!hospital) {
+
+      container.innerHTML = `
+        <div class="empty">
+          Add a hospital to begin.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    const search =
+      document
+        .getElementById("traySearch")
+        .value
+        .trim()
+        .toLowerCase();
+
+
+    const filter =
+      document
+        .getElementById("statusFilter")
+        .value;
+
+
+    let trays =
+      state.trays.filter(
+        tray => tray.hospitalId === hospital.id
+      );
+
+
+    if (search) {
+
+      trays = trays.filter(tray =>
+
+        tray.name
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        (tray.notes || "")
+          .toLowerCase()
+          .includes(search)
+
+      );
+
+    }
+
+
+    if (filter !== "all") {
+
+      trays =
+        trays.filter(
+          tray => tray.status === filter
+        );
+
+    }
+
+
+    if (!trays.length) {
+
+      container.innerHTML = `
+        <div class="empty">
+          No trays found.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    container.innerHTML =
+      trays.map(renderTrayHtml).join("");
+  }
+
+
+  function renderTrayHtml(tray, selectable) {
+
+    const checkbox = selectable
+      ? `
+        <input
+          type="checkbox"
+          class="tray-checkbox transfer-checkbox"
+          data-tray-id="${escapeHtml(tray.id)}"
+          ${selectedTransferTrays.has(tray.id) ? "checked" : ""}
+        >
+      `
+      : "";
+
+
+    return `
+      <div class="tray">
+
+        <div class="tray-main">
+
+          ${checkbox}
+
+          <div class="tray-info">
+
+            <div class="tray-name">
+              ${escapeHtml(tray.name)}
+            </div>
+
+            ${
+              tray.notes
+                ? `
+                  <div class="tray-notes">
+                    ${escapeHtml(tray.notes)}
+                  </div>
+                `
+                : ""
+            }
+
+            <span class="status ${statusClass(tray.status)}">
+              ${statusLabel(tray.status)}
+            </span>
+
+            ${
+              selectable
+                ? ""
+                : `
+                  <div class="tray-actions">
+
+                    <button
+                      type="button"
+                      class="small-btn"
+                      data-status-tray="${escapeHtml(tray.id)}"
+                      data-status="sterile"
+                    >
+                      Sterile
+                    </button>
+
+                    <button
+                      type="button"
+                      class="small-btn"
+                      data-status-tray="${escapeHtml(tray.id)}"
+                      data-status="in-use"
+                    >
+                      In Use
+                    </button>
+
+                    <button
+                      type="button"
+                      class="small-btn"
+                      data-status-tray="${escapeHtml(tray.id)}"
+                      data-status="needs-sterile"
+                    >
+                      Needs Sterile
+                    </button>
+
+                    <button
+                      type="button"
+                      class="small-btn"
+                      data-delete-tray="${escapeHtml(tray.id)}"
+                    >
+                      Delete
+                    </button>
+
+                  </div>
+                `
+            }
+
+          </div>
+
         </div>
 
       </div>
-    `).join("")
-
-    : `<div class="empty">No trays in this view.</div>`;
-}
-
-
-/* Change hospital */
-function changeHospital(h){
-  if(d.hospitals.includes(h)){
-    selected=h;
-    $("search").value="";
-    $("filter").value="all";
-    render();
-  }
-}
-
-
-/* Change tray status */
-function status(id,s){
-
-  let t=d.trays.find(x=>x.id===id);
-
-  if(!t)return;
-
-  t.status=s;
-  t.updated=Date.now();
-
-  save();
-  render();
-}
-
-
-/* Delete tray */
-function del(id){
-
-  if(confirm("Delete "+id+"?")){
-
-    d.trays=d.trays.filter(t=>t.id!==id);
-
-    save();
-    render();
-  }
-}
-
-
-/* Open modal */
-function open(m){
-
-  mode=m;
-
-  $("modal").classList.add("open");
-
-  $("title").textContent=
-    m==="tray"
-    ? "Add Surgical Tray"
-    : "Add Hospital";
-
-  if(m==="tray"){
-
-    $("body").innerHTML=`
-
-      <div class="field">
-        <label>Tray ID / Name</label>
-        <input id="m1" placeholder="e.g. TKA-05">
-      </div>
-
-      <div class="field">
-        <label>Hospital</label>
-
-        <select id="m2">
-          ${d.hospitals.map(h=>
-            `<option value="${esc(h)}" ${h===selected?"selected":""}>
-              ${esc(h)}
-            </option>`
-          ).join("")}
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Starting Status</label>
-
-        <select id="m3">
-          ${
-            Object.entries(labels).map(([k,v])=>
-              `<option value="${k}">
-                ${v}
-              </option>`
-            ).join("")
-          }
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Note</label>
-        <input id="m4" placeholder="OR, case, issue, etc.">
-      </div>
-
-    `;
-
-  }else{
-
-    $("body").innerHTML=`
-
-      <div class="field">
-        <label>Hospital Name</label>
-        <input id="m1" placeholder="Hospital name">
-      </div>
-
     `;
   }
-}
 
 
-/* Close modal */
-function close(){
-  $("modal").classList.remove("open");
-}
+  /* -----------------------------
+     TRANSFER
+  ----------------------------- */
+
+  function renderTransferHospitals() {
+
+    const from =
+      document.getElementById("transferFrom");
+
+    const to =
+      document.getElementById("transferTo");
 
 
-/* Buttons */
-$("add").onclick=()=>open("tray");
-
-$("addHospital").onclick=()=>open("hospital");
-
-$("cancel").onclick=close;
+    const previousFrom = from.value;
+    const previousTo = to.value;
 
 
-/* Hospital selector */
-$("hospitalSelect").onchange=()=>{
-  changeHospital($("hospitalSelect").value);
-};
+    const options = state.hospitals.map(hospital => `
+
+      <option value="${escapeHtml(hospital.id)}">
+        ${escapeHtml(hospital.name)}
+      </option>
+
+    `).join("");
 
 
-/* Save */
-$("save").onclick=()=>{
+    from.innerHTML = options;
+    to.innerHTML = options;
 
-  let n=$("m1").value.trim();
 
-  if(!n){
-    return alert("Enter a name.");
-  }
-
-  if(mode==="hospital"){
-
-    if(d.hospitals.includes(n)){
-      return alert("Hospital already exists.");
-    }
-
-    d.hospitals.push(n);
-
-    selected=n;
-
-  }else{
-
-    if(
-      d.trays.some(
-        t=>t.id.toLowerCase()===n.toLowerCase()
+    if (
+      state.hospitals.some(
+        h => h.id === previousFrom
       )
-    ){
-      return alert("Tray ID already exists.");
+    ) {
+
+      from.value = previousFrom;
+
+    } else if (state.activeHospitalId) {
+
+      from.value = state.activeHospitalId;
+
     }
 
-    d.trays.push({
-      id:n,
-      hospital:$("m2").value,
-      status:$("m3").value,
-      note:$("m4").value.trim(),
-      updated:Date.now()
+
+    if (
+      state.hospitals.some(
+        h => h.id === previousTo
+      )
+      &&
+      previousTo !== from.value
+    ) {
+
+      to.value = previousTo;
+
+    } else {
+
+      const alternative =
+        state.hospitals.find(
+          h => h.id !== from.value
+        );
+
+      to.value =
+        alternative
+          ? alternative.id
+          : "";
+
+    }
+
+
+    if (from.value === to.value) {
+
+      const alternative =
+        state.hospitals.find(
+          h => h.id !== from.value
+        );
+
+      if (alternative) {
+        to.value = alternative.id;
+      }
+    }
+  }
+
+
+  function renderTransferTrays() {
+
+    const container =
+      document.getElementById("transferTrayList");
+
+    const fromId =
+      document.getElementById("transferFrom").value;
+
+    const search =
+      document
+        .getElementById("transferSearch")
+        .value
+        .trim()
+        .toLowerCase();
+
+
+    let trays =
+      state.trays.filter(
+        tray => tray.hospitalId === fromId
+      );
+
+
+    if (search) {
+
+      trays =
+        trays.filter(tray =>
+
+          tray.name
+            .toLowerCase()
+            .includes(search)
+
+          ||
+
+          (tray.notes || "")
+            .toLowerCase()
+            .includes(search)
+
+        );
+
+    }
+
+
+    /*
+      Remove selected IDs that no longer exist
+      at the source hospital.
+    */
+
+    const validIds =
+      new Set(trays.map(tray => tray.id));
+
+
+    [...selectedTransferTrays].forEach(id => {
+
+      const actualTray =
+        state.trays.find(t => t.id === id);
+
+      if (!actualTray || actualTray.hospitalId !== fromId) {
+        selectedTransferTrays.delete(id);
+      }
+
+    });
+
+
+    if (!trays.length) {
+
+      container.innerHTML = `
+        <div class="empty">
+          No trays available at this hospital.
+        </div>
+      `;
+
+      updateTransferSummary();
+
+      return;
+    }
+
+
+    container.innerHTML =
+      trays.map(
+        tray => renderTrayHtml(tray, true)
+      ).join("");
+
+
+    updateTransferSummary();
+  }
+
+
+  function updateTransferSummary() {
+
+    const count =
+      selectedTransferTrays.size;
+
+    document.getElementById("transferSummary")
+      .textContent =
+        count +
+        " tray" +
+        (count === 1 ? "" : "s") +
+        " selected";
+
+
+    document.getElementById("transferBtn")
+      .disabled =
+        count === 0 ||
+        state.hospitals.length < 2;
+
+  }
+
+
+  function selectAllTransferTrays() {
+
+    const fromId =
+      document.getElementById("transferFrom").value;
+
+    state.trays
+      .filter(tray => tray.hospitalId === fromId)
+      .forEach(tray => {
+        selectedTransferTrays.add(tray.id);
+      });
+
+
+    renderTransferTrays();
+  }
+
+
+  function clearTransferSelection() {
+
+    selectedTransferTrays.clear();
+
+    renderTransferTrays();
+  }
+
+
+  function performTransfer() {
+
+    const fromId =
+      document.getElementById("transferFrom").value;
+
+    const toId =
+      document.getElementById("transferTo").value;
+
+
+    if (!fromId || !toId) {
+
+      alert(
+        "You need to select both a From Hospital and a To Hospital."
+      );
+
+      return;
+    }
+
+
+    if (fromId === toId) {
+
+      alert(
+        "The From and To hospitals must be different."
+      );
+
+      return;
+    }
+
+
+    const selected =
+      state.trays.filter(
+        tray =>
+          selectedTransferTrays.has(tray.id)
+          &&
+          tray.hospitalId === fromId
+      );
+
+
+    if (!selected.length) {
+
+      alert("Select at least one tray.");
+
+      return;
+    }
+
+
+    const fromName =
+      hospitalName(fromId);
+
+    const toName =
+      hospitalName(toId);
+
+
+    showModal(
+
+      "Transfer Trays",
+
+      `
+        <p>
+          Transfer
+          <strong>${selected.length}</strong>
+          tray${selected.length === 1 ? "" : "s"}
+          from
+          <strong>${escapeHtml(fromName)}</strong>
+          to
+          <strong>${escapeHtml(toName)}</strong>?
+        </p>
+      `,
+
+      "Transfer",
+
+      function () {
+
+        selected.forEach(tray => {
+
+          tray.hospitalId = toId;
+
+        });
+
+
+        selectedTransferTrays.clear();
+
+        save();
+
+        /*
+          Make destination the active hospital
+          when returning to the hospital page.
+        */
+
+        state.activeHospitalId = toId;
+
+        renderAll();
+
+        showPage("hospital");
+
+        return true;
+      }
+    );
+  }
+
+
+  /* -----------------------------
+     NAVIGATION
+  ----------------------------- */
+
+  function showPage(page) {
+
+    const hospitalPage =
+      document.getElementById("hospitalPage");
+
+    const transferPage =
+      document.getElementById("transferPage");
+
+    const homeNav =
+      document.getElementById("homeNav");
+
+    const transferNav =
+      document.getElementById("transferNav");
+
+
+    if (page === "transfer") {
+
+      hospitalPage.classList.remove("active");
+
+      transferPage.classList.add("active");
+
+      homeNav.classList.remove("active");
+
+      transferNav.classList.add("active");
+
+      renderTransferHospitals();
+
+      renderTransferTrays();
+
+    } else {
+
+      transferPage.classList.remove("active");
+
+      hospitalPage.classList.add("active");
+
+      transferNav.classList.remove("active");
+
+      homeNav.classList.add("active");
+
+      renderAll();
+    }
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
     });
   }
 
-  save();
-  close();
-  render();
-};
+
+  /* -----------------------------
+     CURRENT HOSPITAL
+  ----------------------------- */
+
+  function renderCurrentHospital() {
+
+    const box =
+      document.getElementById("currentHospitalBox");
+
+    const hospital =
+      getActiveHospital();
 
 
-/* Search and filter */
-$("search").oninput=render;
+    if (!hospital) {
 
-$("filter").onchange=render;
+      box.textContent =
+        "No hospital selected";
+
+      return;
+    }
 
 
-/* Initial render */
-render();
+    const count =
+      state.trays.filter(
+        tray => tray.hospitalId === hospital.id
+      ).length;
 
 
-/* Service worker */
-if("serviceWorker"in navigator){
+    box.innerHTML = `
+      Current Hospital:
+      <strong>${escapeHtml(hospital.name)}</strong>
+      · ${count} tray${count === 1 ? "" : "s"}
+    `;
+  }
 
-  window.addEventListener("load",()=>{
 
-    navigator.serviceWorker.register("sw.js");
+  /* -----------------------------
+     RENDER EVERYTHING
+  ----------------------------- */
 
-  });
+  function renderAll() {
 
-}
+    renderHospitals();
 
+    renderCurrentHospital();
+
+    renderTrays();
+
+    renderTransferHospitals();
+
+    renderTransferTrays();
+  }
+
+
+  /* -----------------------------
+     EVENTS
+  ----------------------------- */
+
+  function setupEvents() {
+
+
+    /*
+      Hospital selection
+    */
+
+    document
+      .getElementById("hospitalGrid")
+      .addEventListener("click", function (event) {
+
+        const button =
+          event.target.closest("[data-hospital-id]");
+
+        if (!button) return;
+
+        selectHospital(
+          button.dataset.hospitalId
+        );
+
+      });
+
+
+    /*
+      Add hospital
+    */
+
+    document
+      .getElementById("addHospitalBtn")
+      .addEventListener("click", addHospital);
+
+
+    /*
+      Delete hospital
+    */
+
+    document
+      .getElementById("deleteHospitalBtn")
+      .addEventListener("click", deleteHospital);
+
+
+    /*
+      Add tray
+    */
+
+    document
+      .getElementById("addTrayBtn")
+      .addEventListener("click", addTray);
+
+
+    /*
+      Tray search
+    */
+
+    document
+      .getElementById("traySearch")
+      .addEventListener("input", renderTrays);
+
+
+    /*
+      Status filter
+    */
+
+    document
+      .getElementById("statusFilter")
+      .addEventListener("change", renderTrays);
+
+
+    /*
+      Tray buttons
+    */
+
+    document
+      .getElementById("trayList")
+      .addEventListener("click", function (event) {
+
+        const statusButton =
+          event.target.closest("[data-status-tray]");
+
+        if (statusButton) {
+
+          changeTrayStatus(
+            statusButton.dataset.statusTray,
+            statusButton.dataset.status
+          );
+
+          return;
+        }
+
+
+        const deleteButton =
+          event.target.closest("[data-delete-tray]");
+
+        if (deleteButton) {
+
+          deleteTray(
+            deleteButton.dataset.deleteTray
+          );
+
+        }
+
+      });
+
+
+    /*
+      Transfer navigation
+    */
+
+    document
+      .getElementById("homeNav")
+      .addEventListener(
+        "click",
+        function () {
+          showPage("hospital");
+        }
+      );
+
+
+    document
+      .getElementById("transferNav")
+      .addEventListener(
+        "click",
+        function () {
+          showPage("transfer");
+        }
+      );
+
+
+    /*
+      Transfer hospital changes
+    */
+
+    document
+      .getElementById("transferFrom")
+      .addEventListener(
+        "change",
+        function () {
+
+          selectedTransferTrays.clear();
+
+          renderTransferTrays();
+
+        }
+      );
+
+
+    document
+      .getElementById("transferTo")
+      .addEventListener(
+        "change",
+        function () {
+          updateTransferSummary();
+        }
+      );
+
+
+    /*
+      Transfer search
+    */
+
+    document
+      .getElementById("transferSearch")
+      .addEventListener(
+        "input",
+        renderTransferTrays
+      );
+
+
+    /*
+      Transfer checkboxes
+    */
+
+    document
+      .getElementById("transferTrayList")
+      .addEventListener(
+        "change",
+        function (event) {
+
+          const checkbox =
+            event.target.closest(".transfer-checkbox");
+
+          if (!checkbox) return;
+
+
+          const id =
+            checkbox.dataset.trayId;
+
+
+          if (checkbox.checked) {
+
+            selectedTransferTrays.add(id);
+
+          } else {
+
+            selectedTransferTrays.delete(id);
+
+          }
+
+
+          updateTransferSummary();
+
+        }
+      );
+
+
+    /*
+      Select all
+    */
+
+    document
+      .getElementById("selectAllBtn")
+      .addEventListener(
+        "click",
+        selectAllTransferTrays
+      );
+
+
+    /*
+      Clear selection
+    */
+
+    document
+      .getElementById("clearSelectionBtn")
+      .addEventListener(
+        "click",
+        clearTransferSelection
+      );
+
+
+    /*
+      Transfer
+    */
+
+    document
+      .getElementById("transferBtn")
+      .addEventListener(
+        "click",
+        performTransfer
+      );
+
+
+    /*
+      Modal
+    */
+
+    document
+      .getElementById("modalCancel")
+      .addEventListener(
+        "click",
+        closeModal
+      );
+
+
+    document
+      .getElementById("modalConfirm")
+      .addEventListener(
+        "click",
+        function () {
+
+          if (typeof modalConfirmAction !== "function") {
+            closeModal();
+            return;
+          }
+
+
+          const result =
+            modalConfirmAction();
+
+
+          if (result !== false) {
+            closeModal();
+          }
+
+        }
+      );
+
+
+    /*
+      Close modal by tapping outside
+    */
+
+    document
+      .getElementById("modalBackdrop")
+      .addEventListener(
+        "click",
+        function (event) {
+
+          if (
+            event.target ===
+            document.getElementById("modalBackdrop")
+          ) {
+
+            closeModal();
+
+          }
+
+        }
+      );
+
+
+    /*
+      Escape key
+    */
+
+    document.addEventListener(
+      "keydown",
+      function (event) {
+
+        if (event.key === "Escape") {
+          closeModal();
+        }
+
+      }
+    );
+
+  }
+
+
+  /* -----------------------------
+     START APP
+  ----------------------------- */
+
+  function startApp() {
+
+    load();
+
+    setupEvents();
+
+    renderAll();
+
+  }
+
+
+  if (document.readyState === "loading") {
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      startApp
+    );
+
+  } else {
+
+    startApp();
+
+  }
+
+})();
 </script>
 
 </body>
